@@ -22,8 +22,14 @@ PROCESSING_LEVEL="session"   # "subject" or "session"
 QUEUE="slurm"                # "slurm" or "sge"
 
 INTERPRETING_SHELL="/bin/bash"
-# TODO: move job options here too as e.g. SLURM_RESOURCES
-SLURM_PARTITION="mit_preemptable"
+SLURM_RESOURCES="\
+#SBATCH --partition=mit_preemptable
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --time=00:10:00
+#SBATCH --mem=2G
+#SBATCH --propagate=NONE
+"
 
 # Script preamble to activate your environment (update as needed)
 SCRIPT_PREAMBLE='source activate /home/djarecka/.conda/envs/simple_babs_test
@@ -114,12 +120,7 @@ singularity_args:
 cluster_resources:
     interpreting_shell: ${INTERPRETING_SHELL}
     customized_text: |
-        #SBATCH -p ${SLURM_PARTITION}
-        #SBATCH --nodes=1
-        #SBATCH --ntasks=1
-        #SBATCH --time=00:10:00
-        #SBATCH --mem=2G
-        #SBATCH --propagate=NONE
+$(echo "$SLURM_RESOURCES" | sed -e 's,^,        ,g')
 
 script_preamble: |
     ${SCRIPT_PREAMBLE}
