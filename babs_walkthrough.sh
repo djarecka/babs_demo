@@ -27,16 +27,20 @@ CONTAINER_NAME="simbids-0-0-3"
 PROCESSING_LEVEL="session"   # "subject" or "session"
 QUEUE="slurm"                # "slurm" or "sge"
 
-# YARIK: might need updates
 INTERPRETING_SHELL="/bin/bash"
-SBATCH_PARTITION="mit_preemptable"
+# TODO: move job options here too as e.g. SLURM_RESOURCES
+SLURM_PARTITION="mit_preemptable"
 JOB_COMPUTE_SPACE="${DEMO_DIR}/job_compute_space"
 mkdir -p "${JOB_COMPUTE_SPACE}"
 
 # Script preamble to activate your environment (update as needed)
-# YARIK: might need updates 
 SCRIPT_PREAMBLE='source activate /home/djarecka/.conda/envs/simple_babs_test
     module load apptainer/1.1.9'
+
+# Load custom local setting (potentially Yarik specific)
+if [ -e '.env' ]; then
+    source .env
+fi
 
 # ==============================================================================
 # STEP 0: Create testing BIDS data
@@ -97,13 +101,13 @@ zip_foldernames:
     fmriprep_anat: "25-0-0"
 
 singularity_args:
-    - --no-home
+    - --no-home  # otherwise Dorota gets a magical error
     - --writable-tmpfs
 
 cluster_resources:
     interpreting_shell: ${INTERPRETING_SHELL}
     customized_text: |
-        #SBATCH -p ${SBATCH_PARTITION}
+        #SBATCH -p ${SLURM_PARTITION}
         #SBATCH --nodes=1
         #SBATCH --ntasks=1
         #SBATCH --time=00:10:00
