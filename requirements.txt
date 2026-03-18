@@ -1,0 +1,4 @@
+babs
+con-duct
+git-annex
+datalad

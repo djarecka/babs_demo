@@ -9,34 +9,51 @@
 set -eux
 PS4='> '
 
-cd "$(mktemp -d "${TMPDIR:-/tmp}/babs_walkthrough_XXX")"
 
 # ==============================================================================
 # CONFIGURATION — edit these before running
 # ==============================================================================
 
-DEMO_DIR="${PWD}"
-echo "demo dir" $DEMO_DIR
 SIMBIDS_VERSION="0.0.3"
 SIMBIDS_SIF="simbids-${SIMBIDS_VERSION}.sif"
 SIMBIDS_IMAGE="docker://pennlinc/simbids:${SIMBIDS_VERSION}"
-BABS_CONFIG_FILE="${DEMO_DIR}/config_simbids_0-0-3_raw_mri.yaml"
-BABS_PROJECT="${DEMO_DIR}/my_BABS_project"
-CONTAINER_DS="${DEMO_DIR}/simbids-container"
 CONTAINER_NAME="simbids-0-0-3"
 PROCESSING_LEVEL="session"   # "subject" or "session"
 QUEUE="slurm"                # "slurm" or "sge"
 
-# YARIK: might need updates
 INTERPRETING_SHELL="/bin/bash"
-SBATCH_PARTITION="mit_preemptable"
+SLURM_RESOURCES="\
+#SBATCH --partition=mit_preemptable
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --time=00:10:00
+#SBATCH --mem=2G
+#SBATCH --propagate=NONE
+"
+
+# Script preamble to activate your environment (update as needed)
+SCRIPT_PREAMBLE='source activate /home/djarecka/.conda/envs/simple_babs_test
+    module load apptainer/1.1.9'
+
+# Load custom local setting (potentially Yarik specific)
+if [ -e .env ]; then
+    source .env
+    echo "Configuration after loading:"
+    set | grep -e SLURM_ -e BABS_ -e SCRIPT_
+fi
+
+
+cd "$(mktemp -d "${TMPDIR:-/tmp}/babs_walkthrough_XXX")"
+
+DEMO_DIR="${PWD}"
+echo "demo dir" $DEMO_DIR
+BABS_CONFIG_FILE="${DEMO_DIR}/config_simbids_0-0-3_raw_mri.yaml"
+BABS_PROJECT="${DEMO_DIR}/my_BABS_project"
+CONTAINER_DS="${DEMO_DIR}/simbids-container"
 JOB_COMPUTE_SPACE="${DEMO_DIR}/job_compute_space"
 mkdir -p "${JOB_COMPUTE_SPACE}"
 
-# Script preamble to activate your environment (update as needed)
-# YARIK: might need updates 
-SCRIPT_PREAMBLE='source activate /home/djarecka/.conda/envs/simple_babs_test
-    module load apptainer/1.1.9'
+
 
 # ==============================================================================
 # STEP 0: Create testing BIDS data
@@ -97,18 +114,13 @@ zip_foldernames:
     fmriprep_anat: "25-0-0"
 
 singularity_args:
-    - --no-home
+    - --no-home  # otherwise Dorota gets a magical error
     - --writable-tmpfs
 
 cluster_resources:
     interpreting_shell: ${INTERPRETING_SHELL}
     customized_text: |
-        #SBATCH -p ${SBATCH_PARTITION}
-        #SBATCH --nodes=1
-        #SBATCH --ntasks=1
-        #SBATCH --time=00:10:00
-        #SBATCH --mem=2G
-        #SBATCH --propagate=NONE
+$(echo "$SLURM_RESOURCES" | sed -e 's,^,        ,g')
 
 script_preamble: |
     ${SCRIPT_PREAMBLE}
