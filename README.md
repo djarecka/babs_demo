@@ -1,3 +1,18 @@
+### Preparing the environment
+
+If you have `uv` it should be as trivial as
+
+```
+uv venv && source .venv/bin/activate && uv pip install -r requirements.txt
+```
+
+and continuing to the next steps.
+
+If you need "bleeding edge" babs, do in addition
+
+```
+uv pip install git+https://github.com/PennLINC/babs
+```
 
 ### Running Babs
 
