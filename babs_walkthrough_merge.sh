@@ -5,10 +5,16 @@ PS4='> '
 
 # Accept dataset name and input path as arguments
 BABS_PROJECT="$1"  # Accept site name
-
 BASENAME=$(basename "$(dirname "$BABS_PROJECT")")
-OUTPUT_DIR="$2"  # Accept dataset name as second argument
-TARGET_DIR="${OUTPUT_DIR}/${BASENAME}"
+
+
+if [ -e .env ]; then
+    source .env
+    echo "Configuration of output dir after loading env"
+    set | grep -e BABS_OUTPUT_DIR
+fi
+
+TARGET_DIR="${BABS_OUTPUT_DIR}/${BASENAME}"
 
 
 echo ""
@@ -25,7 +31,7 @@ datalad clone \
 
 echo "Listing outputs:"
 cd "$TARGET_DIR"
-ls
+ls -l
 
 echo ""
 echo "=== Walkthrough complete ==="
