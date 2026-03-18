@@ -20,20 +20,8 @@ SIMBIDS_IMAGE="docker://pennlinc/simbids:${SIMBIDS_VERSION}"
 CONTAINER_NAME="simbids-0-0-3"
 PROCESSING_LEVEL="session"   # "subject" or "session"
 QUEUE="slurm"                # "slurm" or "sge"
-
 INTERPRETING_SHELL="/bin/bash"
-SLURM_RESOURCES="\
-#SBATCH --partition=mit_preemptable
-#SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --time=00:10:00
-#SBATCH --mem=2G
-#SBATCH --propagate=NONE
-"
 
-# Script preamble to activate your environment (update as needed)
-SCRIPT_PREAMBLE='source activate /home/djarecka/.conda/envs/simple_babs_test
-    module load apptainer/1.1.9'
 
 # Load custom local setting (potentially Yarik specific)
 if [ -e .env ]; then
@@ -43,7 +31,7 @@ if [ -e .env ]; then
 fi
 
 
-cd "$(mktemp -d "${TMPDIR:-/tmp}/babs_walkthrough_XXX")"
+cd "$(mktemp -d "${BABS_WORKDIR:-/tmp}/babs_walkthrough_yoh_XXX")"
 
 DEMO_DIR="${PWD}"
 echo "demo dir" $DEMO_DIR
@@ -123,7 +111,7 @@ cluster_resources:
 $(echo "$SLURM_RESOURCES" | sed -e 's,^,        ,g')
 
 script_preamble: |
-    ${SCRIPT_PREAMBLE}
+$(echo "$SCRIPT_PREAMBLE" | sed -e 's,^,        ,g')
 
 job_compute_space: "${JOB_COMPUTE_SPACE}"
 
