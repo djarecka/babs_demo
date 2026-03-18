@@ -9,6 +9,16 @@
 set -eux
 PS4='> '
 
+SKIP_DATA_PREP=false
+
+for arg in "$@"; do
+  case $arg in
+    --skip-data-prep) SKIP_DATA_PREP=true ;;
+    *) echo "Unknown option: $arg"; exit 1 ;;
+  esac
+done
+
+
 
 # ==============================================================================
 # CONFIGURATION — edit these before running
@@ -20,20 +30,8 @@ SIMBIDS_IMAGE="docker://pennlinc/simbids:${SIMBIDS_VERSION}"
 CONTAINER_NAME="simbids-0-0-3"
 PROCESSING_LEVEL="session"   # "subject" or "session"
 QUEUE="slurm"                # "slurm" or "sge"
-
 INTERPRETING_SHELL="/bin/bash"
-SLURM_RESOURCES="\
-#SBATCH --partition=mit_preemptable
-#SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --time=00:10:00
-#SBATCH --mem=2G
-#SBATCH --propagate=NONE
-"
 
-# Script preamble to activate your environment (update as needed)
-SCRIPT_PREAMBLE='source activate /home/djarecka/.conda/envs/simple_babs_test
-    module load apptainer/1.1.9'
 
 # Load custom local setting (potentially Yarik specific)
 if [ -e .env ]; then
@@ -43,7 +41,7 @@ if [ -e .env ]; then
 fi
 
 
-cd "$(mktemp -d "${TMPDIR:-/tmp}/babs_walkthrough_XXX")"
+cd "$(mktemp -d "${BABS_WORKDIR:-/tmp}/babs_walkthrough_yoh_XXX")"
 
 DEMO_DIR="${PWD}"
 echo "demo dir" $DEMO_DIR
@@ -59,24 +57,30 @@ mkdir -p "${JOB_COMPUTE_SPACE}"
 # STEP 0: Create testing BIDS data
 # ==============================================================================
 
-echo "=== Step 0: Create simulated BIDS dataset ==="
+if [ "$SKIP_DATA_PREP" = false ]; then
 
-#mkdir -p "${DEMO_DIR}"
-#cd "${DEMO_DIR}"
+    echo "=== Step 0: Create simulated BIDS dataset ==="
 
-echo "Building Singularity image..."
-singularity build --fakeroot "${SIMBIDS_SIF}" "${SIMBIDS_IMAGE}"
+    echo "Building Singularity image..."
+    singularity build --fakeroot "${SIMBIDS_SIF}" "${SIMBIDS_IMAGE}"
 
-echo "Generating simulated BIDS dataset..."
-singularity exec -B "${DEMO_DIR}" "${SIMBIDS_SIF}" \
-    simbids-raw-mri \
-        "${DEMO_DIR}" \
-        ds004146_configs.yaml
+    echo "Generating simulated BIDS dataset..."
+    singularity exec -B "${DEMO_DIR}" "${SIMBIDS_SIF}" \
+		simbids-raw-mri \
+		"${DEMO_DIR}" \
+		ds004146_configs.yaml
 
-echo "Converting to DataLad dataset..."
-cd "${DEMO_DIR}/simbids"
-datalad create -D "SIMBIDS simulated dataset" -d . --force
-datalad save
+    echo "Converting to DataLad dataset..."
+    cd "${DEMO_DIR}/simbids"
+    datalad create -D "SIMBIDS simulated dataset" -d . --force
+    datalad save
+    DATA_DIR="${DEMO_DIR}/simbids"
+    CONTAINER_PATH="${DEMO_DIR}/${SIMBIDS_SIF}"
+else
+    echo "=== SKIPPING Step 0: Create simulated BIDS dataset ==="
+    DATA_DIR="${BABS_WORKDIR}/babs_walkthrough_preparation/simbids"
+    CONTAINER_PATH="${BABS_WORKDIR}/babs_walkthrough_preparation/${SIMBIDS_SIF}"
+fi
 
 # ==============================================================================
 # STEP 1: Preparation
@@ -91,13 +95,14 @@ cd "${DEMO_DIR}"
 datalad create -D "SIMBIDS container" simbids-container
 cd simbids-container
 datalad containers-add \
-    --url "${DEMO_DIR}/${SIMBIDS_SIF}" \
+    --url "${CONTAINER_PATH}" \
     "${CONTAINER_NAME}"
 
-echo "Removing original container SIF file..."
-cd "${DEMO_DIR}"
-rm "${SIMBIDS_SIF}"
-
+if [ "$SKIP_DATA_PREP" = false ]; then
+    echo "Removing original container SIF file..."
+    cd "${DEMO_DIR}"
+    rm "${SIMBIDS_SIF}"
+fi
 # 1.3 YAML configuration file
 # YARIK: might need updates  (cluster resources)
 echo "Writing BABS container config YAML..."
@@ -123,7 +128,7 @@ cluster_resources:
 $(echo "$SLURM_RESOURCES" | sed -e 's,^,        ,g')
 
 script_preamble: |
-    ${SCRIPT_PREAMBLE}
+$(echo "$SCRIPT_PREAMBLE" | sed -e 's,^,        ,g')
 
 job_compute_space: "${JOB_COMPUTE_SPACE}"
 
@@ -132,7 +137,7 @@ input_datasets:
         required_files:
             - "anat/*_T1w.nii*"
         is_zipped: false
-        origin_url: "${DEMO_DIR}/simbids"
+        origin_url: "${DATA_DIR}"
         path_in_babs: inputs/data/BIDS
 YAML
 
@@ -183,32 +188,4 @@ babs submit
 echo "Final status (re-run manually to monitor until all jobs complete):"
 babs status
 
-echo "=== Stopping here. Run 'babs merge' manually when jobs are done. ==="
-exit 0
-
-
-# ==============================================================================
-# STEP 4: Merge results and access outputs
-# ==============================================================================
-
-echo ""
-echo "=== Step 4: Merge results ==="
-
-cd "${BABS_PROJECT}"
-babs merge
-
-echo "Cloning output RIA store..."
-cd "${DEMO_DIR}"
-datalad clone \
-    "ria+file://${BABS_PROJECT}/output_ria#~data" \
-    my_BABS_project_outputs
-
-echo "Listing outputs:"
-cd my_BABS_project_outputs
-ls
-
-echo ""
-echo "=== Walkthrough complete ==="
-echo "To inspect a specific subject's output, run:"
-echo "  datalad get <subject_zip_file>"
-echo "  unzip -l <subject_zip_file>"
+echo "=== Babs jobs submitted, run 'babs_walkthrough_merge' when jobs are done. ==="
