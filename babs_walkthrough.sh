@@ -165,6 +165,14 @@ cd "${BABS_PROJECT}"
 #babs check-setup --job-test
 
 # ==============================================================================
+# STEP 2b: get containers
+# ==============================================================================
+pushd "analysis/containers/"
+# TODO template this path
+datalad get .datalad/environments/simbids-0-0-3/image
+popd
+
+# ==============================================================================
 # STEP 3: Submit jobs and monitor
 # ==============================================================================
 
