@@ -1,6 +1,5 @@
-# BABS Workflow Diagram
+# BABS Init and Submit Diagram
 
-Based on `out.txt`: BABS initialization walkthrough on a SLURM cluster.
 
 ## Workflow Steps
 
