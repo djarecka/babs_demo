@@ -10,11 +10,13 @@ set -eux
 PS4='> '
 
 SKIP_DATA_PREP=false
+INIT_ONLY=false
 
 for arg in "$@"; do
   case $arg in
-    --skip-data-prep) SKIP_DATA_PREP=true ;;
-    *) echo "Unknown option: $arg"; exit 1 ;;
+      --skip-data-prep) SKIP_DATA_PREP=true ;;
+      --init-only) INIT_ONLY=true ;;
+      *) echo "Unknown option: $arg"; exit 1 ;;
   esac
 done
 
@@ -31,7 +33,8 @@ CONTAINER_NAME="simbids-0-0-3"
 PROCESSING_LEVEL="session"   # "subject" or "session"
 QUEUE="slurm"                # "slurm" or "sge"
 INTERPRETING_SHELL="/bin/bash"
-
+ANALYSIS_PATH="."
+RIAS_DIR="rias"
 
 # Load custom local setting (potentially Yarik specific)
 if [ -e .env ]; then
@@ -78,8 +81,19 @@ if [ "$SKIP_DATA_PREP" = false ]; then
     CONTAINER_PATH="${DEMO_DIR}/${SIMBIDS_SIF}"
 else
     echo "=== SKIPPING Step 0: Create simulated BIDS dataset ==="
-    DATA_DIR="${BABS_WORKDIR}/babs_walkthrough_preparation/simbids"
-    CONTAINER_PATH="${BABS_WORKDIR}/babs_walkthrough_preparation/${SIMBIDS_SIF}"
+    # you can provide DATA_DIR and CONTAINER_DIR in the env file (if it's not in BABS_WORKDIR)
+    if [ -n "${BABS_DATA_DIR}" ]; then
+	DATA_DIR="${BABS_DATA_DIR}"
+	echo "DATA_DIR: ${DATA_DIR}"
+    else
+	DATA_DIR="${BABS_WORKDIR}/babs_walkthrough_preparation/simbids"
+    fi
+    if [ -n "${BABS_CONTAINER_DIR}" ]; then
+	CONTAINER_PATH="${BABS_CONTAINER_DIR}/${SIMBIDS_SIF}"
+	echo "CONTAINER_PATH: ${CONTAINER_PATH}"
+    else
+        CONTAINER_PATH="${BABS_WORKDIR}/babs_walkthrough_preparation/${SIMBIDS_SIF}"
+    fi
 fi
 
 # ==============================================================================
@@ -113,7 +127,10 @@ bids_app_args:
     --stop-on-first-crash: ""
     -vv: ""
     --anat-only: ""
-
+analysis_path: ${ANALYSIS_PATH}
+analysis_dirname: ${ANALYSIS_PATH}
+input_ria_path: "${RIAS_DIR}/input_ria"
+output_ria_path: "${RIAS_DIR}/output_ria"
 all_results_in_one_zip: true
 zip_foldernames:
     fmriprep_anat: "25-0-0"
@@ -138,7 +155,7 @@ input_datasets:
             - "anat/*_T1w.nii*"
         is_zipped: false
         origin_url: "${DATA_DIR}"
-        path_in_babs: inputs/data/BIDS
+        path_in_babs: sourcedata/raw
 YAML
 
 echo "Config written to: ${BABS_CONFIG_FILE}"
@@ -167,10 +184,15 @@ cd "${BABS_PROJECT}"
 # ==============================================================================
 # STEP 2b: get containers
 # ==============================================================================
-pushd "analysis/containers/"
+pushd "${ANALYSIS_PATH}/containers/"
 # TODO template this path
 datalad get .datalad/environments/simbids-0-0-3/image
 popd
+
+if [ "$INIT_ONLY" = true ]; then
+    echo "Only run babs init, no submit!"
+    exit 0
+fi
 
 # ==============================================================================
 # STEP 3: Submit jobs and monitor
