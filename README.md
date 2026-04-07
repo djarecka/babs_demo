@@ -33,6 +33,10 @@ bash babs_walkthrough_prepare.sh
 ```
 bash babs_walkthrough.sh --skip-data-prep
 ```
+- run Babs init only (you can submit the jobs later)
+```
+bash babs_walkthrough.sh --init-only
+```
 
 ### Merging Babs output
 
