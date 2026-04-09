@@ -184,7 +184,15 @@ cd "${BABS_PROJECT}"
 # ==============================================================================
 # STEP 2b: get containers
 # ==============================================================================
-pushd "${ANALYSIS_PATH}/containers/"
+if [ -d "${ANALYSIS_PATH}/containers/" ]; then
+    pushd "${ANALYSIS_PATH}/containers/"
+elif [ -d "analysis/containers/" ]; then
+    pushd "analysis/containers/"
+else
+    echo "ERROR: containers directory not found"
+    exit 1
+fi
+
 # TODO template this path
 datalad get .datalad/environments/simbids-0-0-3/image
 popd
