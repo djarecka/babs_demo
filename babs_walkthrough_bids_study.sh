@@ -2,7 +2,7 @@
 # BABS walkthrough script
 # Based on: https://pennlinc-babs.readthedocs.io/en/stable/walkthrough.html
 # This version start from BIDS study directory with raw data 
-# Usage: bash babs_walkthrough.sh
+# Usage: bash babs_walkthrough_bids_study.sh
 #
 # Customize the variables in the CONFIGURATION section below before running.
 
@@ -31,8 +31,7 @@ CONTAINER_NAME="simbids-0-0-3"
 PROCESSING_LEVEL="session"   # "subject" or "session"
 QUEUE="slurm"                # "slurm" or "sge"
 INTERPRETING_SHELL="/bin/bash"
-ANALYSIS_PATH="." # that should be defoult for teh BIDS study
-RIAS_DIR="rias"
+ANALYSIS_PATH="." # that should be default for the BIDS study
 DATA_REL_DIR="sourcedata/raw"
 
 # Load custom local setting (potentially Yarik specific)
@@ -45,7 +44,7 @@ fi
 cd "$(mktemp -d "${BABS_BIDS_WORKDIR:-/tmp}/babs_walkthrough_yoh_XXX")"
 
 DEMO_DIR="${PWD}"
-echo "demo dir" $DEMO_DIR
+echo "demo dir ${DEMO_DIR}"
 BABS_CONFIG_FILE="${DEMO_DIR}/config_simbids_0-0-3_raw_mri.yaml"
 CONTAINER_DS="${DEMO_DIR}/simbids-container"
 JOB_COMPUTE_SPACE="${DEMO_DIR}/job_compute_space"
@@ -92,7 +91,6 @@ bids_app_args:
     -vv: ""
     --anat-only: ""
 analysis_path: ${ANALYSIS_PATH}
-analysis_dirname: ${ANALYSIS_PATH}
 input_ria_path: ".babs/input_ria"
 output_ria_path: ".babs/output_ria"
 all_results_in_one_zip: true
