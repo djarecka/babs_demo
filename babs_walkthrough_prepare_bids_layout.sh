@@ -42,8 +42,12 @@ echo "=== Step 0: Build Singularity image ==="
 
 mkdir -p "${BABS_BIDS_CONTAINER_DIR}"
 
-echo "Building Singularity image..."
-singularity build --fakeroot "${BABS_BIDS_CONTAINER_DIR}/${SIMBIDS_SIF}" "${SIMBIDS_IMAGE}"
+if [ -e "${BABS_BIDS_CONTAINER_DIR}/${SIMBIDS_SIF}" ]; then
+    echo "Singularity image already exists, skipping build: ${BABS_BIDS_CONTAINER_DIR}/${SIMBIDS_SIF}"
+else
+    echo "Building Singularity image..."
+    singularity build --fakeroot "${BABS_BIDS_CONTAINER_DIR}/${SIMBIDS_SIF}" "${SIMBIDS_IMAGE}"
+fi
 
 # ==============================================================================
 # STEP 1: Set up BABS BIDS study layout
