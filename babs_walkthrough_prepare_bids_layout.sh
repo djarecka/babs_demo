@@ -32,6 +32,7 @@ fi
 # Validate required env vars
 : "${BABS_BIDS_STUDY_DIR:?Error: BABS_BIDS_STUDY_DIR is not set}"
 : "${BABS_BIDS_CONTAINER_DIR:?Error: BABS_BIDS_CONTAINER_DIR is not set}"
+: "${BABS_BIDS_WORKDIR:?Error: BABS_BIDS_WORKDIR is not set}"
 
 # ==============================================================================
 # STEP 0: Create simulated BIDS data
@@ -54,24 +55,22 @@ echo "Creating BABS BIDS study as DataLad dataset..."
 datalad create -c text2git "${BABS_BIDS_STUDY_DIR}"
 
 echo "Generating simulated BIDS dataset..."
-SIMBIDS_TMP="${BABS_BIDS_CONTAINER_DIR}/simbids_tmp"
-mkdir -p "${SIMBIDS_TMP}"
+mkdir -p "${BABS_BIDS_WORKDIR}"
+SIMBIDS_TMP=$(mktemp -d "${BABS_BIDS_WORKDIR}/simbids_XXX")
 cd "${SIMBIDS_TMP}"
 singularity exec -B "${SIMBIDS_TMP}" "${BABS_BIDS_CONTAINER_DIR}/${SIMBIDS_SIF}" \
     simbids-raw-mri \
         "${SIMBIDS_TMP}" \
         ds004146_configs.yaml
 
-echo "Moving simulated BIDS data to sourcedata/raw..."
-mkdir -p "${BABS_BIDS_STUDY_DIR}/sourcedata"
-mv "${SIMBIDS_TMP}/simbids" "${BABS_BIDS_STUDY_DIR}/sourcedata/raw"
+echo "Creating datalad dataset from simulated BIDS data..."
+RAW_SRC="${SIMBIDS_TMP}/simbids"
+datalad create -c text2git -D "SIMBIDS simulated dataset" -d . --force "${RAW_SRC}"
+datalad save -d "${RAW_SRC}" -m "Add simulated BIDS data"
 
-echo "Creating sourcedata/raw as subdataset..."
+echo "Cloning simulated BIDS data as sourcedata/raw subdataset..."
 RAW_DIR="${BABS_BIDS_STUDY_DIR}/sourcedata/raw"
-datalad create -c text2git -D "SIMBIDS simulated dataset" -d "${BABS_BIDS_STUDY_DIR}" --force "${RAW_DIR}"
-
-echo "Saving simulated BIDS data..."
-datalad save -d "${RAW_DIR}" -m "Add simulated BIDS data"
+datalad clone -d "${BABS_BIDS_STUDY_DIR}" "${RAW_SRC}" "${RAW_DIR}"
 
 mkdir -p "${BABS_BIDS_STUDY_DIR}/derivatives"
 touch "${BABS_BIDS_STUDY_DIR}/derivatives/.gitkeep"
