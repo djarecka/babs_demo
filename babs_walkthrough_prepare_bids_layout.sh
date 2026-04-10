@@ -69,12 +69,14 @@ singularity exec -B "${SIMBIDS_TMP}" "${BABS_BIDS_CONTAINER_DIR}/${SIMBIDS_SIF}"
 
 echo "Creating datalad dataset from simulated BIDS data..."
 RAW_SRC="${SIMBIDS_TMP}/simbids"
-datalad create -c text2git -D "SIMBIDS simulated dataset" -d . --force "${RAW_SRC}"
+datalad create -D "SIMBIDS simulated dataset" --force "${RAW_SRC}"
 datalad save -d "${RAW_SRC}" -m "Add simulated BIDS data"
 
 echo "Cloning simulated BIDS data as sourcedata/raw subdataset..."
 RAW_DIR="${BABS_BIDS_STUDY_DIR}/sourcedata/raw"
 datalad clone -d "${BABS_BIDS_STUDY_DIR}" "${RAW_SRC}" "${RAW_DIR}"
+cd "${BABS_BIDS_STUDY_DIR}"
+datalad get sourcedata/raw
 
 mkdir -p "${BABS_BIDS_STUDY_DIR}/derivatives"
 touch "${BABS_BIDS_STUDY_DIR}/derivatives/.gitkeep"
