@@ -14,7 +14,74 @@ If you need "bleeding edge" babs, do in addition
 uv pip install git+https://github.com/PennLINC/babs
 ```
 
-### Running Babs
+
+### Running Babs with a BIDS study layout
+
+This approach uses a persistent BIDS study directory (`BABS_BIDS_STUDY_DIR`) with
+raw data as a subdataset and BABS project output under `derivatives/`.
+Set `BABS_BIDS_STUDY_DIR`, `BABS_BIDS_CONTAINER_DIR`, and `BABS_BIDS_WORKDIR` (for the computation space).
+in your `.env` file before running.
+
+1. Prepare the BIDS study layout (build the Singularity image, generate simulated data, set up the datalad dataset structure):
+```
+bash babs_walkthrough_prepare_bids_layout.sh
+```
+The layout of BABS_BIDS_STUDY_DIR after this step:
+```
+BABS_BIDS_STUDY_DIR/
+  sourcedata/
+    raw/          (datalad subdataset with simulated BIDS data)
+        dataset_description.json
+        sub-001/
+        sub-002/        
+  derivatives/
+    .gitkeep
+```
+
+2. Initialize and submit BABS jobs:
+```
+bash babs_walkthrough_bids_layout.sh
+```
+The layout of `BABS_BIDS_STUDY_DIR` after this step:
+```
+BABS_BIDS_STUDY_DIR/
+  sourcedata/
+    raw/
+  derivatives/
+    <babs_project_dir>/
+      .babs/              (hidden: input_ria/, output_ria/, babs_init_config.yaml)
+      CHANGELOG.md
+      README.md
+      code/
+      containers/
+      logs/
+      sourcedata/
+```
+
+3. After all jobs finish, merge and extract results (pass the BABS project directory as a full path or relative to `BABS_BIDS_STUDY_DIR/derivatives/`):
+```
+bash babs_walkthrough_merge_bids_layout.sh <path>
+```
+The layout of `BABS_BIDS_STUDY_DIR` after this step:
+```
+BABS_BIDS_STUDY_DIR/
+  sourcedata/
+    raw/
+  derivatives/
+    <babs_project_dir>/
+      .babs/              (hidden: input_ria/, output_ria/, babs_init_config.yaml)
+      CHANGELOG.md
+      README.md
+      code/
+      containers/
+      dataset_description.json
+      logs/
+      sourcedata/
+      sub-0001/
+      sub-0002/
+```
+
+### Running Babs (older version of the demo, without enforcing bids layout)
 
 You have two options to prepare data and run Babs:
 
