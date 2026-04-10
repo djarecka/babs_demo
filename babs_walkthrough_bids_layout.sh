@@ -138,6 +138,9 @@ babs init \
     --queue "${QUEUE}" \
     "${DERIVATIVE_DIR}"
 
+echo "Registering BABS project as subdataset of BABS_BIDS_STUDY_DIR..."
+datalad save -d "${BABS_BIDS_STUDY_DIR}" -m "Add BABS project as subdataset" "${DERIVATIVE_DIR}"
+
 echo "Verifying setup with a test job..."
 cd "${DERIVATIVE_DIR}"
 # removing for now, since it gives an error
