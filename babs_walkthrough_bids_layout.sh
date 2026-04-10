@@ -55,15 +55,15 @@ mkdir -p "${JOB_COMPUTE_SPACE}"
 if [ -z "${BABS_BIDS_STUDY_DIR}" ]; then
     echo "Error: BABS_BIDS_STUDY_DIR is not set" >&2
     exit 1
-elif [ -z "${BABS_CONTAINER_DIR}" ]; then
-    echo "Error: BABS_CONTAINER_DIR is not set" >&2
+elif [ -z "${BABS_BIDS_CONTAINER_DIR}" ]; then
+    echo "Error: BABS_BIDS_CONTAINER_DIR is not set" >&2
     exit 1
 fi
 
 DEMO_REL_DIR=$(basename "${DEMO_DIR}")
 DERIVATIVE_DIR="${BABS_BIDS_STUDY_DIR}/derivatives/${DEMO_REL_DIR}"
 DATA_DIR="${BABS_BIDS_STUDY_DIR}/${DATA_REL_DIR}"
-CONTAINER_PATH="${BABS_CONTAINER_DIR}/${SIMBIDS_SIF}"
+CONTAINER_PATH="${BABS_BIDS_CONTAINER_DIR}/${SIMBIDS_SIF}"
 
 # ==============================================================================
 # STEP 1: Preparation
