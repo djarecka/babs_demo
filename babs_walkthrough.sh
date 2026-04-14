@@ -34,7 +34,7 @@ PROCESSING_LEVEL="session"   # "subject" or "session"
 QUEUE="slurm"                # "slurm" or "sge"
 INTERPRETING_SHELL="/bin/bash"
 ANALYSIS_PATH="."
-RIAS_DIR="rias"
+RIAS_DIR=".babs"
 
 # Load custom local setting (potentially Yarik specific)
 if [ -e .env ]; then
