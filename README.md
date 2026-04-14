@@ -19,8 +19,9 @@ uv pip install git+https://github.com/PennLINC/babs
 
 This approach uses a persistent BIDS study directory (`BABS_BIDS_STUDY_DIR`) with
 raw data as a subdataset and BABS project output under `derivatives/`.
-Set `BABS_BIDS_STUDY_DIR`, `BABS_BIDS_CONTAINER_DIR`, and `BABS_BIDS_WORKDIR` (for the computation space).
-in your `.env` file before running.
+
+Set `BABS_BIDS_STUDY_DIR`, `BABS_BIDS_CONTAINER_DIR`, and `BABS_BIDS_WORKDIR` (for the computation space), as well as your HPC settings,
+in your `.env` file before running. You can check [the example from MIT](.env.mit) 
 
 1. Prepare the BIDS study layout (build the Singularity image, generate simulated data, set up the datalad dataset structure):
 ```
@@ -39,6 +40,8 @@ BABS_BIDS_STUDY_DIR/
 ```
 
 2. Initialize and submit BABS jobs:
+
+Note: By default the `ANALYSIS_PATH` is set to `.`, but you can change it in the script.
 ```
 bash babs_walkthrough_bids_layout.sh
 ```
