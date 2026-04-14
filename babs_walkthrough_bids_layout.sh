@@ -23,7 +23,7 @@ done
 # ==============================================================================
 # CONFIGURATION — edit these before running
 # ==============================================================================
-
+# I'm using simbids container from the babs walktrough
 SIMBIDS_VERSION="0.0.3"
 SIMBIDS_SIF="simbids-${SIMBIDS_VERSION}.sif"
 SIMBIDS_IMAGE="docker://pennlinc/simbids:${SIMBIDS_VERSION}"
@@ -31,7 +31,10 @@ CONTAINER_NAME="simbids-0-0-3"
 PROCESSING_LEVEL="session"   # "subject" or "session"
 QUEUE="slurm"                # "slurm" or "sge"
 INTERPRETING_SHELL="/bin/bash"
-ANALYSIS_PATH="." # that should be default for the BIDS study
+# using . to remove the additional directory structure to follow the BIDS study structure
+# will also work with "analysis" (or any other name)
+ANALYSIS_PATH="."
+# it could be changed, but the datasaet I'm using as an example uses sourcedata/raw
 DATA_REL_DIR="sourcedata/raw"
 
 # Load custom local setting (potentially Yarik specific)
@@ -138,8 +141,14 @@ babs init \
     --queue "${QUEUE}" \
     "${DERIVATIVE_DIR}"
 
-echo "Registering BABS project as subdataset of BABS_BIDS_STUDY_DIR..."
-datalad save -d "${BABS_BIDS_STUDY_DIR}" -m "Add BABS project as subdataset" "${DERIVATIVE_DIR}"
+
+# it was leading to errors (during running the singular babs jobs) for ANALYSIS_PATH that were not .
+if [ "${ANALYSIS_PATH}" = "." ]; then
+    echo "Registering BABS project as subdataset of BABS_BIDS_STUDY_DIR..."
+    echo "BABS_BIDS_STUDY_DIR: ${BABS_BIDS_STUDY_DIR}"
+    echo "DERIVATIVE_DIR: ${DERIVATIVE_DIR}"
+    datalad save -d "${BABS_BIDS_STUDY_DIR}" -m "Add BABS project as subdataset" "${DERIVATIVE_DIR}"
+fi
 
 echo "Verifying setup with a test job..."
 cd "${DERIVATIVE_DIR}"
