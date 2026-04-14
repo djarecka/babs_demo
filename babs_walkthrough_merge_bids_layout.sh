@@ -40,7 +40,12 @@ cd "${BABS_PROJECT}"
 echo "Merging BABS results..."
 babs merge
 
+ANALYSIS_PATH=$(grep 'analysis_path' .babs/babs_init_config.yaml | sed 's/.*analysis_path:[[:space:]]*//' | tr -d '"' )
+ANALYSIS_PATH="${ANALYSIS_PATH:-analysis}"
+
+echo "Going to the analuysis directoy: ${ANALYSIS_PATH}, to update the results and unzip tehrm"
 echo "Updating output dataset..."
+cd "${ANALYSIS_PATH}"
 datalad update --how ff-only --sibling output
 
 echo "Extracting zip files..."
